@@ -1,538 +1,215 @@
--- TPUA Advanced Script with Spinning Options
--- Based on Infinite Yield's tpua command but with more features
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local Player = Players.LocalPlayer
-local Mouse = Player:GetMouse()
 
--- === USER-EDITABLE MAX VALUES ===
-local MAX_RADIUS = 300
-local MAX_DISTANCE = 300
--- ================================
-
--- TpWalk variable
-local TpWalkValue = 0
-local MAX_TPWALK = 0.5
-local TpWalkActive = false
-
--- Create GUI
+-- Create UI
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TPUAGui"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = game:GetService("CoreGui")
+ScreenGui.Name = "TeleportUnanchoredUI"
+ScreenGui.Parent = game.CoreGui
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 340, 0, 500)
-MainFrame.Position = UDim2.new(0, 10, 0, 10)
-MainFrame.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
+MainFrame.Size = UDim2.new(0, 200, 0, 300)
+MainFrame.Position = UDim2.new(0.8, 0, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- Rounded corners and border
-local MainFrameCorner = Instance.new("UICorner")
-MainFrameCorner.CornerRadius = UDim.new(0, 12)
-MainFrameCorner.Parent = MainFrame
-local MainFrameStroke = Instance.new("UIStroke")
-MainFrameStroke.Thickness = 2
-MainFrameStroke.Color = Color3.fromRGB(50, 50, 60)
-MainFrameStroke.Parent = MainFrame
-
--- Layout for vertical stacking
-local MainLayout = Instance.new("UIListLayout")
-MainLayout.Parent = MainFrame
-MainLayout.SortOrder = Enum.SortOrder.LayoutOrder
-MainLayout.Padding = UDim.new(0, 8)
-
--- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 40)
-TitleBar.BackgroundColor3 = Color3.fromRGB(36, 36, 42)
-TitleBar.BorderSizePixel = 0
-TitleBar.LayoutOrder = 1
-TitleBar.Parent = MainFrame
-local TitleBarCorner = Instance.new("UICorner")
-TitleBarCorner.CornerRadius = UDim.new(0, 12)
-TitleBarCorner.Parent = TitleBar
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = MainFrame
 
 local Title = Instance.new("TextLabel")
 Title.Name = "Title"
-Title.Size = UDim2.new(1, -35, 1, 0)
-Title.Position = UDim2.new(0, 10, 0, 0)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Position = UDim2.new(0, 0, 0, 0)
 Title.BackgroundTransparency = 1
-Title.Text = "TPUA Controller"
+Title.Text = "Teleport Unanchored"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 22
-Title.Font = Enum.Font.SourceSansBold
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = TitleBar
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 18
+Title.Parent = MainFrame
 
-local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -32, 0, 5)
-CloseButton.BackgroundTransparency = 1
-CloseButton.Text = "×"
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.TextSize = 24
-CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.Parent = TitleBar
-
--- Toggle Button
-ToggleButton.Size = UDim2.new(1, -20, 0, 40)
-ToggleButton.Position = UDim2.new(0, 10, 0, 0)
-ToggleButton.LayoutOrder = 2
-ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-ToggleButton.TextSize = 20
-ToggleButton.Font = Enum.Font.SourceSansBold
-ToggleButton.Text = "TPUA: OFF"
+local ToggleButton = Instance.new("TextButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Size = UDim2.new(0.9, 0, 0, 30)
+ToggleButton.Position = UDim2.new(0.05, 0, 0.15, 0)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+ToggleButton.Text = "OFF"
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.TextSize = 14
 ToggleButton.Parent = MainFrame
-local ToggleButtonCorner = Instance.new("UICorner")
-ToggleButtonCorner.CornerRadius = UDim.new(0, 8)
-ToggleButtonCorner.Parent = ToggleButton
 
--- Sliders Group
-local SlidersFrame = Instance.new("Frame")
-SlidersFrame.Name = "SlidersFrame"
-SlidersFrame.Size = UDim2.new(1, -20, 0, 160)
-SlidersFrame.Position = UDim2.new(0, 10, 0, 0)
-SlidersFrame.BackgroundTransparency = 1
-SlidersFrame.LayoutOrder = 3
-SlidersFrame.Parent = MainFrame
-local SlidersLayout = Instance.new("UIListLayout")
-SlidersLayout.Parent = SlidersFrame
-SlidersLayout.SortOrder = Enum.SortOrder.LayoutOrder
-SlidersLayout.Padding = UDim.new(0, 8)
+local UICorner2 = Instance.new("UICorner")
+UICorner2.CornerRadius = UDim.new(0, 6)
+UICorner2.Parent = ToggleButton
 
--- Speed Slider
-SpeedLabel.Position = UDim2.new(0, 0, 0, 0)
-SpeedLabel.Size = UDim2.new(0, 180, 0, 25)
-SpeedLabel.Parent = SlidersFrame
-SpeedValueLabel.Position = UDim2.new(1, -70, 0, 0)
-SpeedValueLabel.Size = UDim2.new(0, 60, 0, 25)
-SpeedValueLabel.Parent = SlidersFrame
-SliderBG.Size = UDim2.new(1, 0, 0, 10)
-SliderBG.Position = UDim2.new(0, 0, 0, 0)
-SliderBG.Parent = SlidersFrame
-SliderFill.Parent = SliderBG
-SliderKnob.Parent = SliderFill
+local ModeLabel = Instance.new("TextLabel")
+ModeLabel.Name = "ModeLabel"
+ModeLabel.Size = UDim2.new(0.9, 0, 0, 20)
+ModeLabel.Position = UDim2.new(0.05, 0, 0.3, 0)
+ModeLabel.BackgroundTransparency = 1
+ModeLabel.Text = "Mode: Normal"
+ModeLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+ModeLabel.Font = Enum.Font.Gotham
+ModeLabel.TextSize = 14
+ModeLabel.Parent = MainFrame
 
--- Distance Slider
-DistanceLabel.Parent = SlidersFrame
-DistanceValueLabel.Parent = SlidersFrame
-DistanceSliderBG.Size = UDim2.new(1, 0, 0, 10)
-DistanceSliderBG.Parent = SlidersFrame
-DistanceSliderFill.Parent = DistanceSliderBG
-DistanceSliderKnob.Parent = DistanceSliderFill
+local ModeButton = Instance.new("TextButton")
+ModeButton.Name = "ModeButton"
+ModeButton.Size = UDim2.new(0.9, 0, 0, 30)
+ModeButton.Position = UDim2.new(0.05, 0, 0.4, 0)
+ModeButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+ModeButton.Text = "Change Mode"
+ModeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ModeButton.Font = Enum.Font.Gotham
+ModeButton.TextSize = 14
+ModeButton.Parent = MainFrame
 
--- Radius Slider
-RadiusLabel.Parent = SlidersFrame
-RadiusSliderBG.Size = UDim2.new(1, 0, 0, 10)
-RadiusSliderBG.Parent = SlidersFrame
-RadiusSliderFill.Parent = RadiusSliderBG
-RadiusSliderKnob.Parent = RadiusSliderFill
+local UICorner3 = Instance.new("UICorner")
+UICorner3.CornerRadius = UDim.new(0, 6)
+UICorner3.Parent = ModeButton
 
--- Ultra Fast Toggle
-UltraFastToggle.Size = UDim2.new(0, 100, 0, 25)
-UltraFastToggle.Position = UDim2.new(1, -110, 0, 0)
-UltraFastToggle.Parent = SlidersFrame
-local UltraFastCorner = Instance.new("UICorner")
-UltraFastCorner.CornerRadius = UDim.new(0, 6)
-UltraFastCorner.Parent = UltraFastToggle
+local SpeedLabel = Instance.new("TextLabel")
+SpeedLabel.Name = "SpeedLabel"
+SpeedLabel.Size = UDim2.new(0.9, 0, 0, 20)
+SpeedLabel.Position = UDim2.new(0.05, 0, 0.6, 0)
+SpeedLabel.BackgroundTransparency = 1
+SpeedLabel.Text = "Speed: 0.5"
+SpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+SpeedLabel.Font = Enum.Font.Gotham
+SpeedLabel.TextSize = 14
+SpeedLabel.Parent = MainFrame
 
--- TpWalk Group
-local TpWalkFrame = Instance.new("Frame")
-TpWalkFrame.Name = "TpWalkFrame"
-TpWalkFrame.Size = UDim2.new(1, -20, 0, 55)
-TpWalkFrame.Position = UDim2.new(0, 10, 0, 0)
-TpWalkFrame.BackgroundTransparency = 1
-TpWalkFrame.LayoutOrder = 4
-TpWalkFrame.Parent = MainFrame
+local SpeedSlider = Instance.new("Frame")
+SpeedSlider.Name = "SpeedSlider"
+SpeedSlider.Size = UDim2.new(0.9, 0, 0, 20)
+SpeedSlider.Position = UDim2.new(0.05, 0, 0.7, 0)
+SpeedSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+SpeedSlider.BorderSizePixel = 0
+SpeedSlider.Parent = MainFrame
 
-local TpWalkLayout = Instance.new("UIListLayout")
-TpWalkLayout.Parent = TpWalkFrame
-TpWalkLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TpWalkLayout.Padding = UDim.new(0, 4)
+local UICorner4 = Instance.new("UICorner")
+UICorner4.CornerRadius = UDim.new(0, 6)
+UICorner4.Parent = SpeedSlider
 
-TpWalkLabel.Parent = TpWalkFrame
-TpWalkValueLabel.Parent = TpWalkFrame
-TpWalkSliderBG.Parent = TpWalkFrame
-TpWalkSliderFill.Parent = TpWalkSliderBG
-TpWalkSliderKnob.Parent = TpWalkSliderFill
-TpWalkToggle.Parent = TpWalkFrame
+local SliderFill = Instance.new("Frame")
+SliderFill.Name = "SliderFill"
+SliderFill.Size = UDim2.new(0.5, 0, 1, 0)
+SliderFill.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+SliderFill.BorderSizePixel = 0
+SliderFill.Parent = SpeedSlider
 
--- Mode Buttons
-ModeFrame.Position = UDim2.new(0, 0, 0, 370)
-ModeFrame.Size = UDim2.new(1, 0, 0, 70)
-ModeFrame.BackgroundTransparency = 1
-ModeFrame.LayoutOrder = 5
-ModeFrame.Parent = MainFrame
+local UICorner5 = Instance.new("UICorner")
+UICorner5.CornerRadius = UDim.new(0, 6)
+UICorner5.Parent = SliderFill
 
--- Create Mode Buttons
-local function CreateModeButton(name, text, posX, posY)
-    local button = Instance.new("TextButton")
-    button.Name = name
-    button.Size = UDim2.new(0, 90, 0, 20)
-    button.Position = UDim2.new(0, posX, 0, posY)
-    button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    button.BorderSizePixel = 0
-    button.Text = text
-    button.TextColor3 = Color3.fromRGB(255, 255, 255)
-    button.TextSize = 12
-    button.Font = Enum.Font.SourceSans
-    button.Parent = ModeFrame
-    button.AutoButtonColor = true
-    return button
-end
+local SliderButton = Instance.new("TextButton")
+SliderButton.Name = "SliderButton"
+SliderButton.Size = UDim2.new(1, 0, 1, 0)
+SliderButton.BackgroundTransparency = 1
+SliderButton.Text = ""
+SliderButton.Parent = SpeedSlider
 
-local OrbitButton = CreateModeButton("OrbitButton", "🔄 Orbit", 5, 5)
-local RandomButton = CreateModeButton("RandomButton", "🎲 Random", 105, 5)
-local CircleButton = CreateModeButton("CircleButton", "⭕ Circle", 5, 30)
-local SpiralButton = CreateModeButton("SpiralButton", "�� Spiral", 105, 30)
-local FollowMouseButton = CreateModeButton("FollowMouseButton", "🖱️ Follow Mouse", 5, 55)
-local CoordsButton = CreateModeButton("CoordsButton", "📍 Coords", 105, 55)
+local DistanceLabel = Instance.new("TextLabel")
+DistanceLabel.Name = "DistanceLabel"
+DistanceLabel.Size = UDim2.new(0.9, 0, 0, 20)
+DistanceLabel.Position = UDim2.new(0.05, 0, 0.8, 0)
+DistanceLabel.BackgroundTransparency = 1
+DistanceLabel.Text = "Distance: 10"
+DistanceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+DistanceLabel.Font = Enum.Font.Gotham
+DistanceLabel.TextSize = 14
+DistanceLabel.Parent = MainFrame
+
+local DistanceSlider = Instance.new("Frame")
+DistanceSlider.Name = "DistanceSlider"
+DistanceSlider.Size = UDim2.new(0.9, 0, 0, 20)
+DistanceSlider.Position = UDim2.new(0.05, 0, 0.9, 0)
+DistanceSlider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+DistanceSlider.BorderSizePixel = 0
+DistanceSlider.Parent = MainFrame
+
+local UICorner6 = Instance.new("UICorner")
+UICorner6.CornerRadius = UDim.new(0, 6)
+UICorner6.Parent = DistanceSlider
+
+local DistanceFill = Instance.new("Frame")
+DistanceFill.Name = "DistanceFill"
+DistanceFill.Size = UDim2.new(0.5, 0, 1, 0)
+DistanceFill.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+DistanceFill.BorderSizePixel = 0
+DistanceFill.Parent = DistanceSlider
+
+local UICorner7 = Instance.new("UICorner")
+UICorner7.CornerRadius = UDim.new(0, 6)
+UICorner7.Parent = DistanceFill
+
+local DistanceButton = Instance.new("TextButton")
+DistanceButton.Name = "DistanceButton"
+DistanceButton.Size = UDim2.new(1, 0, 1, 0)
+DistanceButton.BackgroundTransparency = 1
+DistanceButton.Text = ""
+DistanceButton.Parent = DistanceSlider
 
 -- Variables
-local Active = false
-local TeleportSpeed = 0.01
-local OrbitDistance = 10
-local LastTeleport = 0
-local Connection = nil
+local isEnabled = false
+local teleportSpeed = 0.5
+local frozenParts = {}
 local BodyPositions = {}
 local BodyGyros = {}
-local frozenParts = {}
-local OrbitSpeed = 1
-local OrbitRadius = 5
 local currentAngle = 0
 local SpiralHeight = 0
-local CurrentMode = "Orbit" -- Default mode
+local CurrentMode = "Normal"
+local OrbitDistance = 10
 
--- Add Ultra Fast Toggle next to speed slider
-local UltraFastToggle = Instance.new("TextButton")
-UltraFastToggle.Name = "UltraFastToggle"
-UltraFastToggle.Size = UDim2.new(0, 60, 0, 25)
-UltraFastToggle.Position = UDim2.new(1, -140, 0, 95)
-UltraFastToggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-UltraFastToggle.Text = "Ultra Fast"
-UltraFastToggle.TextColor3 = Color3.fromRGB(255, 255, 0)
-UltraFastToggle.TextSize = 14
-UltraFastToggle.Font = Enum.Font.SourceSansBold
-UltraFastToggle.Parent = MainFrame
+local Modes = {
+    "Normal",
+    "Orbit",
+    "Random",
+    "Spiral",
+    "Circle"
+}
 
-local RenderConnection = nil
-
-local UltraFast = false
-
-UltraFastToggle.MouseButton1Click:Connect(function()
-    UltraFast = not UltraFast
-    if UltraFast then
-        UltraFastToggle.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-        UltraFastToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
-        TeleportSpeed = 0.001
-        SpeedLabel.Text = "Speed: Ultra Fast"
-        SpeedValueLabel.Text = "0.001"
-    else
-        UltraFastToggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        UltraFastToggle.TextColor3 = Color3.fromRGB(255, 255, 0)
-        SpeedLabel.Text = "Speed: " .. string.format("%.2f", TeleportSpeed) .. "s"
-        SpeedValueLabel.Text = string.format("%.2f", TeleportSpeed)
+-- Functions
+local function isPartValid(part)
+    if part:IsDescendantOf(Players.LocalPlayer.Character) then
+        return false
     end
-end)
-
--- Spin Mode Highlight Function
-local function HighlightCurrentMode()
-    OrbitButton.BackgroundColor3 = (CurrentMode == "Orbit") and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
-    RandomButton.BackgroundColor3 = (CurrentMode == "Random") and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
-    CircleButton.BackgroundColor3 = (CurrentMode == "Circle") and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
-    SpiralButton.BackgroundColor3 = (CurrentMode == "Spiral") and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
-    FollowMouseButton.BackgroundColor3 = (CurrentMode == "FollowMouse") and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
-    CoordsButton.BackgroundColor3 = (CurrentMode == "Coords") and Color3.fromRGB(0, 170, 255) or Color3.fromRGB(60, 60, 60)
-end
-
--- Slider functionality
-local function UpdateSlider(Percentage)
-    Percentage = math.clamp(Percentage, 0, 1)
-    SliderFill.Size = UDim2.new(Percentage, 0, 1, 0)
-    -- Convert to speed (0.01 to 1 second)
-    TeleportSpeed = 0.01 + Percentage * 0.99
-    SpeedLabel.Text = "Speed: " .. string.format("%.2f", TeleportSpeed) .. "s"
-    SpeedValueLabel.Text = string.format("%.2f", TeleportSpeed)
-end
-
--- Distance Slider functionality
-local function UpdateDistanceSlider(Percentage)
-    Percentage = math.clamp(Percentage, 0, 1)
-    DistanceSliderFill.Size = UDim2.new(Percentage, 0, 1, 0)
-    OrbitDistance = 1 + Percentage * (MAX_DISTANCE - 1)
-    DistanceLabel.Text = "Distance: " .. string.format("%.1f", OrbitDistance)
-    DistanceValueLabel.Text = string.format("%.1f", OrbitDistance)
-end
-
--- Radius Slider functionality
-local function UpdateRadiusSlider(Percentage)
-    Percentage = math.clamp(Percentage, 0, 1)
-    RadiusSliderFill.Size = UDim2.new(Percentage, 0, 1, 0)
-    OrbitRadius = 1 + Percentage * (MAX_RADIUS - 1)
-    RadiusLabel.Text = "Radius: " .. string.format("%.1f", OrbitRadius)
-end
-
--- TpWalk Label (above slider)
-local TpWalkLabel = Instance.new("TextLabel")
-TpWalkLabel.Name = "TpWalkLabel"
-TpWalkLabel.Size = UDim2.new(0, 150, 0, 20)
-TpWalkLabel.Position = UDim2.new(0, 10, 0, 275)
-TpWalkLabel.BackgroundTransparency = 1
-TpWalkLabel.Text = "TpWalk: 0.00"
-TpWalkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TpWalkLabel.TextSize = 15
-TpWalkLabel.Font = Enum.Font.SourceSans
-TpWalkLabel.TextXAlignment = Enum.TextXAlignment.Left
-TpWalkLabel.Parent = MainFrame
-
-local TpWalkValueLabel = Instance.new("TextLabel")
-TpWalkValueLabel.Name = "TpWalkValueLabel"
-TpWalkValueLabel.Size = UDim2.new(0, 50, 0, 20)
-TpWalkValueLabel.Position = UDim2.new(0, 165, 0, 275)
-TpWalkValueLabel.BackgroundTransparency = 1
-TpWalkValueLabel.Text = "0.00"
-TpWalkValueLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-TpWalkValueLabel.TextSize = 15
-TpWalkValueLabel.Font = Enum.Font.SourceSansBold
-TpWalkValueLabel.TextXAlignment = Enum.TextXAlignment.Right
-TpWalkValueLabel.Parent = MainFrame
-
-local TpWalkSliderBG = Instance.new("Frame")
-TpWalkSliderBG.Name = "TpWalkSliderBG"
-TpWalkSliderBG.Size = UDim2.new(0, 150, 0, 10)
-TpWalkSliderBG.Position = UDim2.new(0, 10, 0, 295)
-TpWalkSliderBG.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-TpWalkSliderBG.BorderSizePixel = 0
-TpWalkSliderBG.Parent = MainFrame
-
-local TpWalkSliderFill = Instance.new("Frame")
-TpWalkSliderFill.Name = "TpWalkSliderFill"
-TpWalkSliderFill.Size = UDim2.new(0, 0, 1, 0)
-TpWalkSliderFill.BackgroundColor3 = Color3.fromRGB(255, 200, 50)
-TpWalkSliderFill.BorderSizePixel = 0
-TpWalkSliderFill.Parent = TpWalkSliderBG
-
-local TpWalkSliderKnob = Instance.new("Frame")
-TpWalkSliderKnob.Name = "TpWalkSliderKnob"
-TpWalkSliderKnob.Size = UDim2.new(0, 18, 0, 22)
-TpWalkSliderKnob.Position = UDim2.new(0, -9, 0.5, -11)
-TpWalkSliderKnob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-TpWalkSliderKnob.BorderSizePixel = 0
-TpWalkSliderKnob.Parent = TpWalkSliderFill
-TpWalkSliderKnob.ZIndex = 2
-
--- TpWalk Toggle Button (right of slider)
-local TpWalkToggle = Instance.new("TextButton")
-TpWalkToggle.Name = "TpWalkToggle"
-TpWalkToggle.Size = UDim2.new(0, 80, 0, 25)
-TpWalkToggle.Position = UDim2.new(0, 170, 0, 290)
-TpWalkToggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-TpWalkToggle.Text = "TpWalk: OFF"
-TpWalkToggle.TextColor3 = Color3.fromRGB(255, 255, 0)
-TpWalkToggle.TextSize = 14
-TpWalkToggle.Font = Enum.Font.SourceSansBold
-TpWalkToggle.Parent = MainFrame
-
-TpWalkToggle.MouseButton1Click:Connect(function()
-    TpWalkActive = not TpWalkActive
-    if TpWalkActive then
-        TpWalkToggle.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-        TpWalkToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
-        TpWalkToggle.Text = "TpWalk: ON"
-    else
-        TpWalkToggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        TpWalkToggle.TextColor3 = Color3.fromRGB(255, 255, 0)
-        TpWalkToggle.Text = "TpWalk: OFF"
-    end
-end)
-
--- Function to apply BodyPosition and BodyGyro to unanchored parts
-local function ApplyConstraints()
-    -- Clear existing constraints
-    for _, constraint in pairs(BodyPositions) do
-        if constraint and constraint.Parent then
-            constraint:Destroy()
-        end
-    end
-    for _, constraint in pairs(BodyGyros) do
-        if constraint and constraint.Parent then
-            constraint:Destroy()
-        end
-    end
-    BodyPositions = {}
-    BodyGyros = {}
     
-    local Character = Player.Character
-    local HumanoidRootPart = Character and Character:FindFirstChild('HumanoidRootPart')
-    
-    if not HumanoidRootPart then return end
-    
-    -- Find all unanchored parts and apply constraints
-    for _, part in pairs(workspace:GetDescendants()) do
-        if part:IsA("BasePart") and part.Anchored == false and not part:IsDescendantOf(Player.Character) and
-           part.Name ~= "Torso" and part.Name ~= "Head" and part.Name ~= "Right Arm" and part.Name ~= "Left Arm" and
-           part.Name ~= "Right Leg" and part.Name ~= "Left Leg" and part.Name ~= "HumanoidRootPart" then
-            
-            -- Remove existing constraints
-            for _, child in pairs(part:GetChildren()) do
-                if child:IsA("BodyPosition") or child:IsA("BodyGyro") then
-                    child:Destroy()
-                end
-            end
-            
-            -- Create new BodyPosition
-            local bodyPos = Instance.new("BodyPosition")
-            bodyPos.Parent = part
-            bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-            bodyPos.Position = HumanoidRootPart.Position
-            
-            -- Create new BodyGyro
-            local bodyGyro = Instance.new("BodyGyro")
-            bodyGyro.Parent = part
-            bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-            bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0))
-            
-            table.insert(BodyPositions, bodyPos)
-            table.insert(BodyGyros, bodyGyro)
-            
-            if not table.find(frozenParts, part) then
-                table.insert(frozenParts, part)
+    if part:IsA("Model") then
+        for _, child in pairs(part:GetDescendants()) do
+            if child:IsA("BasePart") and not child.Anchored then
+                return true
             end
         end
-    end
-end
-
--- Function to update positions based on current mode
-local function UpdateConstraintPositions()
-    local Character = Player.Character
-    local HumanoidRootPart = Character and Character:FindFirstChild('HumanoidRootPart')
-    
-    if not HumanoidRootPart then return end
-    
-    local basePosition = HumanoidRootPart.Position
-    local baseCFrame = HumanoidRootPart.CFrame
-    
-    -- Update angle for orbit modes
-    currentAngle = currentAngle + (math.pi / 30) * OrbitSpeed
-    if currentAngle >= math.pi * 2 then
-        currentAngle = currentAngle - math.pi * 2
+        return false
+    elseif not part:IsA("BasePart") and not part:IsA("UnionOperation") then
+        return false
     end
     
-    -- Spiral height increases gradually and resets
-    SpiralHeight = SpiralHeight + 0.1
-    if SpiralHeight > 10 then
-        SpiralHeight = -10
+    if part.Anchored then
+        return false
     end
     
-    -- Update each constraint based on mode
-    for i, bodyPos in pairs(BodyPositions) do
-        if bodyPos and bodyPos.Parent and BodyGyros[i] and BodyGyros[i].Parent then
-            local part = bodyPos.Parent
-            local bodyGyro = BodyGyros[i]
-            
-            if CurrentMode == "Orbit" then
-                -- Orbit around player
-                local offset = Vector3.new(
-                    math.cos(currentAngle + (i * 0.2)) * OrbitDistance,
-                    0,
-                    math.sin(currentAngle + (i * 0.2)) * OrbitDistance
-                )
-                bodyPos.Position = basePosition + offset
-                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0), offset)
-                
-            elseif CurrentMode == "Random" then
-                -- Random positions around player
-                local randomOffset = Vector3.new(
-                    (math.random() - 0.5) * OrbitDistance * 2,
-                    (math.random() - 0.5) * OrbitDistance * 2,
-                    (math.random() - 0.5) * OrbitDistance * 2
-                )
-                bodyPos.Position = basePosition + randomOffset
-                bodyGyro.CFrame = CFrame.fromEulerAnglesXYZ(math.random() * math.pi * 2, math.random() * math.pi * 2, math.random() * math.pi * 2)
-                
-            elseif CurrentMode == "Circle" then
-                -- Circle formation on horizontal plane
-                local partAngle = math.pi * 2 * (i % 20) / 20
-                local offset = Vector3.new(
-                    math.cos(partAngle) * OrbitDistance,
-                    0,
-                    math.sin(partAngle) * OrbitDistance
-                )
-                bodyPos.Position = basePosition + offset
-                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0), offset)
-                
-            elseif CurrentMode == "Spiral" then
-                -- Spiral formation
-                local partIndex = i % 30
-                local spiralAngle = partIndex * (math.pi / 15) + currentAngle
-                local spiralRadius = OrbitDistance * (1 - (partIndex / 30))
-                local heightOffset = -5 + ((partIndex / 30) * 10) + SpiralHeight
-                
-                local offset = Vector3.new(
-                    math.cos(spiralAngle) * spiralRadius,
-                    heightOffset,
-                    math.sin(spiralAngle) * spiralRadius
-                )
-                bodyPos.Position = basePosition + offset
-                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0), offset)
-            elseif CurrentMode == "FollowMouse" then
-                -- Highly accurate follow mouse cursor in 3D
-                local camera = workspace.CurrentCamera
-                local mouseRay = camera:ViewportPointToRay(Mouse.X, Mouse.Y)
-                local raycastParams = RaycastParams.new()
-                raycastParams.FilterDescendantsInstances = {Player.Character}
-                raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-                local raycastResult = workspace:Raycast(mouseRay.Origin, mouseRay.Direction * 10000, raycastParams)
-                local targetPos
-                if raycastResult then
-                    -- Use the exact hit Y position, plus a small offset (e.g., 1 stud above the surface)
-                    targetPos = raycastResult.Position + Vector3.new(0, 1, 0)
-                else
-                    -- Fallback: use the ray at OrbitDistance
-                    targetPos = mouseRay.Origin + mouseRay.Direction * OrbitDistance
-                end
-                bodyPos.Position = targetPos
-                -- Orient towards the direction from the part to the target
-                local lookVector = (targetPos - bodyPos.Parent.Position).Unit
-                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0), lookVector)
-            elseif CurrentMode == "Coords" then
-                local x = tonumber(XBox.Text)
-                local y = tonumber(YBox.Text)
-                local z = tonumber(ZBox.Text)
-                if x and y and z then
-                    local target = Vector3.new(x, y, z)
-                    bodyPos.Position = target
-                    BodyGyros[i].CFrame = CFrame.new(Vector3.new(0, 0, 0), Vector3.new(1, 0, 0))
-                end
-            end
+    local invalidNames = {
+        "Torso", "Head", "Right Arm", "Left Arm", 
+        "Right Leg", "Left Leg", "HumanoidRootPart",
+        "UpperTorso", "LowerTorso", "LeftUpperArm", "RightUpperArm",
+        "LeftLowerArm", "RightLowerArm", "LeftUpperLeg", "RightUpperLeg",
+        "LeftLowerLeg", "RightLowerLeg", "LeftFoot", "RightFoot"
+    }
+    
+    for _, name in ipairs(invalidNames) do
+        if part.Name == name then
+            return false
         end
     end
-
-    -- TpWalk: Move player's HumanoidRootPart towards the first constraint's position if enabled
-    if TpWalkActive and TpWalkValue > 0 and #BodyPositions > 0 and HumanoidRootPart then
-        local targetPos = BodyPositions[1].Position
-        local currentPos = HumanoidRootPart.Position
-        local diff = targetPos - currentPos
-        local dist = diff.Magnitude
-        if dist > TpWalkValue then
-            local moveVec = diff.Unit * TpWalkValue
-            HumanoidRootPart.CFrame = CFrame.new(currentPos + moveVec, currentPos + moveVec + HumanoidRootPart.CFrame.LookVector)
-        else
-            HumanoidRootPart.CFrame = CFrame.new(targetPos, targetPos + HumanoidRootPart.CFrame.LookVector)
-        end
-    end
+    
+    return true
 end
 
--- Function to clear all constraints
 local function ClearConstraints()
     for _, constraint in pairs(BodyPositions) do
         if constraint and constraint.Parent then
@@ -549,231 +226,232 @@ local function ClearConstraints()
     frozenParts = {}
 end
 
--- Setup slider drag functionality
-local function SetupSlider(slider, knob, updateFunc)
-    local isDragging = false
+local function ApplyConstraints()
+    ClearConstraints()
     
-    slider.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isDragging = true
-            local relativeX = (Input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-            updateFunc(relativeX)
-        end
-    end)
+    local character = Players.LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
     
-    knob.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isDragging = true
-        end
-    end)
+    local rootPart = character.HumanoidRootPart
     
-    UserInputService.InputEnded:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-            isDragging = false
+    for _, part in pairs(workspace:GetDescendants()) do
+        if isPartValid(part) then
+            if part:IsA("Model") then
+                for _, child in pairs(part:GetDescendants()) do
+                    if child:IsA("BasePart") and not child.Anchored and not child:IsDescendantOf(Players.LocalPlayer.Character) then
+                        for _, constraint in pairs(child:GetChildren()) do
+                            if constraint:IsA("BodyPosition") or constraint:IsA("BodyGyro") then
+                                constraint:Destroy()
+                            end
+                        end
+                        
+                        local bodyPos = Instance.new("BodyPosition")
+                        bodyPos.Parent = child
+                        bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                        bodyPos.Position = rootPart.Position
+                        
+                        local bodyGyro = Instance.new("BodyGyro")
+                        bodyGyro.Parent = child
+                        bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                        bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0))
+                        
+                        table.insert(BodyPositions, bodyPos)
+                        table.insert(BodyGyros, bodyGyro)
+                        
+                        if not table.find(frozenParts, child) then
+                            table.insert(frozenParts, child)
+                        end
+                    end
+                end
+            else
+                for _, constraint in pairs(part:GetChildren()) do
+                    if constraint:IsA("BodyPosition") or constraint:IsA("BodyGyro") then
+                        constraint:Destroy()
+                    end
+                end
+                
+                local bodyPos = Instance.new("BodyPosition")
+                bodyPos.Parent = part
+                bodyPos.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
+                bodyPos.Position = rootPart.Position
+                
+                local bodyGyro = Instance.new("BodyGyro")
+                bodyGyro.Parent = part
+                bodyGyro.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0))
+                
+                table.insert(BodyPositions, bodyPos)
+                table.insert(BodyGyros, bodyGyro)
+                
+                if not table.find(frozenParts, part) then
+                    table.insert(frozenParts, part)
+                end
+            end
         end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(Input)
-        if isDragging and Input.UserInputType == Enum.UserInputType.MouseMovement then
-            local relativeX = (Input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X
-            updateFunc(relativeX)
-        end
-    end)
+    end
 end
 
--- Set up both sliders
-SetupSlider(SliderBG, SliderKnob, UpdateSlider)
-SetupSlider(DistanceSliderBG, DistanceSliderKnob, UpdateDistanceSlider)
-SetupSlider(RadiusSliderBG, RadiusSliderKnob, UpdateRadiusSlider)
-SetupSlider(TpWalkSliderBG, TpWalkSliderKnob, UpdateTpWalkSlider)
-
--- Set up mode button events
-OrbitButton.MouseButton1Click:Connect(function()
-    CurrentMode = "Orbit"
-    HighlightCurrentMode()
-end)
-
-RandomButton.MouseButton1Click:Connect(function()
-    CurrentMode = "Random"
-    HighlightCurrentMode()
-end)
-
-CircleButton.MouseButton1Click:Connect(function()
-    CurrentMode = "Circle"
-    HighlightCurrentMode()
-end)
-
-SpiralButton.MouseButton1Click:Connect(function()
-    CurrentMode = "Spiral"
-    HighlightCurrentMode()
-end)
-
-FollowMouseButton.MouseButton1Click:Connect(function()
-    CurrentMode = "FollowMouse"
-    HighlightCurrentMode()
-end)
-
-CoordsButton.MouseButton1Click:Connect(function()
-    CurrentMode = "Coords"
-    HighlightCurrentMode()
-end)
-
--- Toggle Button Click
-ToggleButton.MouseButton1Click:Connect(function()
-    Active = not Active
-    if Active then
-        ToggleButton.Text = "TPUA: ON"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
-        ApplyConstraints()
-        if not RenderConnection then
-            RenderConnection = RunService.RenderStepped:Connect(function()
-                UpdateConstraintPositions()
-            end)
+local function UpdateConstraintPositions()
+    local character = Players.LocalPlayer.Character
+    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    
+    local rootPart = character.HumanoidRootPart
+    local basePosition = rootPart.Position
+    local baseCFrame = rootPart.CFrame
+    
+    -- Calculate movement speed (completely separate from distance)
+    local movementSpeed = 0.1 + (teleportSpeed * 0.9) -- Range from 0.1 to 1.0
+    currentAngle = currentAngle + (math.pi / 30) * movementSpeed
+    if currentAngle >= math.pi * 2 then
+        currentAngle = currentAngle - math.pi * 2
+    end
+    
+    -- Spiral height changes at a constant rate
+    SpiralHeight = SpiralHeight + 0.1
+    if SpiralHeight > 10 then
+        SpiralHeight = -10
+    end
+    
+    for i, bodyPos in pairs(BodyPositions) do
+        if bodyPos and bodyPos.Parent and BodyGyros[i] and BodyGyros[i].Parent then
+            local bodyGyro = BodyGyros[i]
+            
+            if CurrentMode == "Normal" then
+                bodyPos.Position = basePosition
+                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0))
+                
+            elseif CurrentMode == "Orbit" then
+                -- Use OrbitDistance directly without any speed influence
+                local offset = Vector3.new(
+                    math.cos(currentAngle + (i * 0.2)) * OrbitDistance,
+                    0,
+                    math.sin(currentAngle + (i * 0.2)) * OrbitDistance
+                )
+                bodyPos.Position = basePosition + offset
+                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0), offset)
+                
+            elseif CurrentMode == "Random" then
+                -- Use OrbitDistance directly without any speed influence
+                local randomOffset = Vector3.new(
+                    (math.random() - 0.5) * OrbitDistance * 2,
+                    (math.random() - 0.5) * OrbitDistance * 2,
+                    (math.random() - 0.5) * OrbitDistance * 2
+                )
+                bodyPos.Position = basePosition + randomOffset
+                bodyGyro.CFrame = CFrame.fromEulerAnglesXYZ(math.random() * math.pi * 2, math.random() * math.pi * 2, math.random() * math.pi * 2)
+                
+            elseif CurrentMode == "Circle" then
+                -- Use OrbitDistance directly without any speed influence
+                local partAngle = math.pi * 2 * (i % 20) / 20
+                local offset = Vector3.new(
+                    math.cos(partAngle) * OrbitDistance,
+                    0,
+                    math.sin(partAngle) * OrbitDistance
+                )
+                bodyPos.Position = basePosition + offset
+                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0), offset)
+                
+            elseif CurrentMode == "Spiral" then
+                -- Use OrbitDistance directly without any speed influence
+                local partIndex = i % 30
+                local spiralAngle = partIndex * (math.pi / 15) + currentAngle
+                local spiralRadius = OrbitDistance * (1 - (partIndex / 30))
+                local heightOffset = -5 + ((partIndex / 30) * 10) + SpiralHeight
+                
+                local offset = Vector3.new(
+                    math.cos(spiralAngle) * spiralRadius,
+                    heightOffset,
+                    math.sin(spiralAngle) * spiralRadius
+                )
+                bodyPos.Position = basePosition + offset
+                bodyGyro.CFrame = CFrame.new(Vector3.new(0, 0, 0), offset)
+            end
         end
+    end
+end
+
+-- UI Interactions
+ToggleButton.MouseButton1Click:Connect(function()
+    isEnabled = not isEnabled
+    ToggleButton.BackgroundColor3 = isEnabled and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+    ToggleButton.Text = isEnabled and "ON" or "OFF"
+    if isEnabled then
+        ApplyConstraints()
     else
-        ToggleButton.Text = "TPUA: OFF"
-        ToggleButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-        if RenderConnection then RenderConnection:Disconnect() RenderConnection = nil end
         ClearConstraints()
     end
 end)
 
--- Close Button
-CloseButton.MouseButton1Click:Connect(function()
-    if RenderConnection then RenderConnection:Disconnect() end
-    ClearConstraints()
-    ScreenGui:Destroy()
+ModeButton.MouseButton1Click:Connect(function()
+    local currentIndex = table.find(Modes, CurrentMode) or 1
+    currentIndex = currentIndex % #Modes + 1
+    CurrentMode = Modes[currentIndex]
+    ModeLabel.Text = "Mode: " .. CurrentMode
 end)
 
--- Set initial values
-UpdateSlider(0)  -- 0.01s
-UpdateDistanceSlider((10 - 1) / (MAX_DISTANCE - 1))  -- 10 units
-UpdateRadiusSlider((5 - 1) / (MAX_RADIUS - 1))       -- 5 units
-UpdateTpWalkSlider(0) -- 0 studs/frame
-HighlightCurrentMode()
+SliderButton.MouseButton1Down:Connect(function()
+    local mouse = Players.LocalPlayer:GetMouse()
+    local sliderWidth = SpeedSlider.AbsoluteSize.X
+    local mouseX = mouse.X - SpeedSlider.AbsolutePosition.X
+    
+    local newValue = math.clamp(mouseX / sliderWidth, 0.01, 1)
+    teleportSpeed = newValue
+    SliderFill.Size = UDim2.new(newValue, 0, 1, 0)
+    SpeedLabel.Text = "Speed: " .. string.format("%.2f", teleportSpeed)
+end)
 
--- Display load notification
-local Notification = Instance.new("Frame")
-Notification.Name = "Notification"
-Notification.Size = UDim2.new(0, 200, 0, 30)
-Notification.Position = UDim2.new(0.5, -100, 0, 340)
-Notification.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Notification.BorderSizePixel = 1
-Notification.BorderColor3 = Color3.fromRGB(60, 60, 60)
-Notification.Parent = ScreenGui
+DistanceButton.MouseButton1Down:Connect(function()
+    local mouse = Players.LocalPlayer:GetMouse()
+    local sliderWidth = DistanceSlider.AbsoluteSize.X
+    local mouseX = mouse.X - DistanceSlider.AbsolutePosition.X
+    
+    local newValue = math.clamp(mouseX / sliderWidth, 0.01, 1)
+    OrbitDistance = newValue * 200 -- Range from 2 to 200
+    if OrbitDistance < 2 then OrbitDistance = 2 end
+    DistanceFill.Size = UDim2.new(newValue, 0, 1, 0)
+    DistanceLabel.Text = "Distance: " .. string.format("%.1f", OrbitDistance)
+end)
 
-local NotificationText = Instance.new("TextLabel")
-NotificationText.Name = "NotificationText"
-NotificationText.Size = UDim2.new(1, 0, 1, 0)
-NotificationText.BackgroundTransparency = 1
-NotificationText.Text = "Advanced TPUA Script Loaded"
-NotificationText.TextColor3 = Color3.fromRGB(255, 255, 255)
-NotificationText.TextSize = 14
-NotificationText.Font = Enum.Font.SourceSansBold
-NotificationText.Parent = Notification
+-- Make UI draggable
+local dragging
+local dragInput
+local dragStart
+local startPos
 
--- Make notification disappear after 2 seconds
-game:GetService("Debris"):AddItem(Notification, 2)
-
--- Add coordinate input boxes and teleport button
-local CoordLabel = Instance.new("TextLabel")
-CoordLabel.Name = "CoordLabel"
-CoordLabel.Size = UDim2.new(0, 80, 0, 25)
-CoordLabel.Position = UDim2.new(0, 10, 1, -40)
-CoordLabel.BackgroundTransparency = 1
-CoordLabel.Text = "Teleport to:"
-CoordLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-CoordLabel.TextSize = 14
-CoordLabel.Font = Enum.Font.SourceSansBold
-CoordLabel.TextXAlignment = Enum.TextXAlignment.Left
-CoordLabel.Parent = MainFrame
-
-XBox = Instance.new("TextBox")
-XBox.Name = "XBox"
-XBox.Size = UDim2.new(0, 60, 0, 25)
-XBox.Position = UDim2.new(0, 100, 1, -40)
-XBox.PlaceholderText = "X"
-XBox.Text = ""
-XBox.TextColor3 = Color3.fromRGB(0, 255, 255)
-XBox.TextSize = 14
-XBox.Font = Enum.Font.SourceSansBold
-XBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-XBox.BorderSizePixel = 1
-XBox.Parent = MainFrame
-
-YBox = Instance.new("TextBox")
-YBox.Name = "YBox"
-YBox.Size = UDim2.new(0, 60, 0, 25)
-YBox.Position = UDim2.new(0, 170, 1, -40)
-YBox.PlaceholderText = "Y"
-YBox.Text = ""
-YBox.TextColor3 = Color3.fromRGB(0, 255, 255)
-YBox.TextSize = 14
-YBox.Font = Enum.Font.SourceSansBold
-YBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-YBox.BorderSizePixel = 1
-YBox.Parent = MainFrame
-
-ZBox = Instance.new("TextBox")
-ZBox.Name = "ZBox"
-ZBox.Size = UDim2.new(0, 60, 0, 25)
-ZBox.Position = UDim2.new(0, 240, 1, -40)
-ZBox.PlaceholderText = "Z"
-ZBox.Text = ""
-ZBox.TextColor3 = Color3.fromRGB(0, 255, 255)
-ZBox.TextSize = 14
-ZBox.Font = Enum.Font.SourceSansBold
-ZBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-ZBox.BorderSizePixel = 1
-ZBox.Parent = MainFrame
-
--- Move ModeFrame and coordinate input down to fit new layout
-ModeFrame.Position = UDim2.new(0, 0, 0, 325)
-CoordLabel.Position = UDim2.new(0, 10, 1, -10)
-XBox.Position = UDim2.new(0, 100, 1, -10)
-YBox.Position = UDim2.new(0, 170, 1, -10)
-ZBox.Position = UDim2.new(0, 240, 1, -10)
-
--- TpWalk Heartbeat logic
-local TpWalkConnection = nil
-local function StartTpWalk()
-    if TpWalkConnection then TpWalkConnection:Disconnect() end
-    local chr = Player.Character
-    local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
-    if not chr or not hum then return end
-    TpWalkConnection = RunService.Heartbeat:Connect(function(delta)
-        if not TpWalkActive or not Active then return end
-        if hum.MoveDirection.Magnitude > 0 then
-            local speed = TpWalkValue > 0 and TpWalkValue or 0.1
-            chr:TranslateBy(hum.MoveDirection * speed * delta * 10)
-        end
-    end)
-end
-local function StopTpWalk()
-    if TpWalkConnection then TpWalkConnection:Disconnect() TpWalkConnection = nil end
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 end
 
-TpWalkToggle.MouseButton1Click:Connect(function()
-    TpWalkActive = not TpWalkActive
-    if TpWalkActive then
-        TpWalkToggle.BackgroundColor3 = Color3.fromRGB(255, 200, 0)
-        TpWalkToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
-        TpWalkToggle.Text = "TpWalk: ON"
-        StartTpWalk()
-    else
-        TpWalkToggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        TpWalkToggle.TextColor3 = Color3.fromRGB(255, 255, 0)
-        TpWalkToggle.Text = "TpWalk: OFF"
-        StopTpWalk()
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
     end
 end)
 
--- Also stop TpWalk when TPUA is toggled off
-ToggleButton.MouseButton1Click:Connect(function()
-    Active = not Active
-    if not Active then
-        StopTpWalk()
-    elseif TpWalkActive then
-        StartTpWalk()
+MainFrame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
     end
 end)
+
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+-- Main loop
+RunService.Heartbeat:Connect(function()
+    if isEnabled then
+        UpdateConstraintPositions()
+    end
+end) 
